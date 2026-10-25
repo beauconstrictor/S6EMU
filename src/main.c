@@ -90,8 +90,8 @@ word_t fetchw(word_t addr) {
 
 void put(word_t addr, byte_t val) {
   if (addr == SERI)
-    return
-  else if (addr = SERO)
+    return;
+  else if (addr == SERO)
     putchar(val & 0xff), fflush(stdout);
   else if (addr < 0x8000)
     ram[addr] = val;
@@ -108,7 +108,7 @@ word_t execute(word_t addr) {
   byte_t r = fetch(b) - fetch(a);
   put(b, r);
 
-  if (r == 0 || (r & 0x80) && c != 0xffff)
+  if ((r == 0 || (r & 0x80)) && (c != 0xffff))
     return c;
   else
     return addr;
