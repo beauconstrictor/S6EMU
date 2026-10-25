@@ -12,7 +12,7 @@
 
 #define HELP \
   "Usage: s6 [ROM]\n" \
-  "A SUBLEQ-6 Emulator. Pass a ROM image up to 64K.\n" \
+  "A SUBLEQ-6 Emulator. Pass a ROM image up to 32K.\n" \
   "\n" \
   "Options:\n" \
   "  --version       Show version information and exit\n"
@@ -25,24 +25,33 @@
   "There is NO WARRANTY, to the extent permitted by law.\n"
 
 typedef uint16_t word_t;
+typedef uint8_t  byte_t;
 
-word_t ram[0x8000];
-word_t rom[0x8000];
+byte_t ram[0x8000];
+byte_t rom[0x8000];
 
 struct termios old_termios;
+int terminal_initialized = 0;
 
-void initialise_terminal() {
-  struct termios raw;
+void initialise_terminal(void) {
+    struct termios raw;
 
-  tcgetattr(STDIN_FILENO, &old_termios);
-  raw = old_termios;
+    if (tcgetattr(STDIN_FILENO, &old_termios) == -1)
+        return;
 
-  raw.c_lflag &= ~(ICANON | ECHO);
-tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
+    raw = old_termios;
+    raw.c_lflag &= ~(ICANON | ECHO);
+
+    if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw) == -1)
+        return;
+
+    terminal_initialized = 1;
+    return;
 }
 
-void restore_terminal() {
-  tcsetattr(STDIN_FILENO, TCSAFLUSH, &old_termios);
+void restore_terminal(void) {
+    if (terminal_initialized)
+        tcsetattr(STDIN_FILENO, TCSAFLUSH, &old_termios);
 }
 
 char getkey(void) {
@@ -63,7 +72,7 @@ char getkey(void) {
     return 0;
 }
 
-word_t fetch(word_t addr) {
+byte_t fetch(word_t addr) {
   if (addr == SERIAL)
     return getkey();
   else if (addr < 0x8000)
@@ -72,22 +81,29 @@ word_t fetch(word_t addr) {
     return rom[addr - 0x8000];
 }
 
-void put(word_t addr, word_t val) {
+word_t fetchw(word_t addr) {
+  return (fetch(addr) << 8) | fetch(addr+1);
+}
+
+void put(word_t addr, byte_t val) {
   if (addr == SERIAL)
-    putchar(val & 0xff);
+    putchar(val & 0xff), fflush(stdout);
   else if (addr < 0x8000)
     ram[addr] = val;
 }
 
 word_t execute(word_t addr) {
-  word_t a = fetch(addr++);
-  word_t b = fetch(addr++);
-  word_t c = fetch(addr++);
+  word_t a = fetchw(addr++);
+  addr++;
+  word_t b = fetchw(addr++);
+  addr++;
+  word_t c = fetchw(addr++);
+  addr++;
 
-  word_t r = fetch(b) - fetch(a);
+  byte_t r = fetch(b) - fetch(a);
   put(b, r);
 
-  if (r == 0 || (r & 0x8000))
+  if (r == 0 || (r & 0x80))
     return c;
   else
     return addr;
@@ -118,25 +134,19 @@ int main(int argc, char* argv[]) {
   if (img_size < 0) {
     perror("ftell");
     return 1;
-  } else if (img_size > 0x10000) {
-    fprintf(stderr, "s6: rom image exceeds 64K");
+  } else if (img_size > 0x8000) {
+    fprintf(stderr, "s6: rom image exceeds 32K");
     return 1;
   }
   rewind(f);
 
-  uint8_t buf[0x10000];
-  size_t read_size = fread(buf, 1, img_size, f);
+  size_t read_size = fread(rom, 1, img_size, f);
   if (read_size != (size_t)img_size) {
     perror("fread");
     return 1;
   }
  
   fclose(f);
-
-  for (size_t i = 0; i < read_size / 2; i++) {
-    rom[i] = (word_t)buf[2 * i]
-           | ((word_t)buf[2 * i + 1] << 8);
-  }
 
   atexit(restore_terminal);
   initialise_terminal();
