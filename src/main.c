@@ -103,7 +103,7 @@ word_t execute(word_t addr) {
   byte_t r = fetch(b) - fetch(a);
   put(b, r);
 
-  if (r == 0 || (r & 0x80))
+  if (r == 0 || (r & 0x80) && c != 0xffff)
     return c;
   else
     return addr;
