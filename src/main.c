@@ -7,8 +7,9 @@
 #include <sys/time.h>
 #include <sys/select.h>
 
-#define SERIAL 0xffff
-#define HALT   0xfffe
+#define SERI 0xffff
+#define SERO 0xfffe
+#define HALT 0xfffe
 
 #define HELP \
   "Usage: s6 [ROM]\n" \
@@ -73,8 +74,10 @@ char getkey(void) {
 }
 
 byte_t fetch(word_t addr) {
-  if (addr == SERIAL)
+  if (addr == SERI)
     return getkey();
+  else if (addr == SERO)
+    return 0;
   else if (addr < 0x8000)
     return ram[addr];
   else
@@ -86,7 +89,9 @@ word_t fetchw(word_t addr) {
 }
 
 void put(word_t addr, byte_t val) {
-  if (addr == SERIAL)
+  if (addr == SERI)
+    return
+  else if (addr = SERO)
     putchar(val & 0xff), fflush(stdout);
   else if (addr < 0x8000)
     ram[addr] = val;
