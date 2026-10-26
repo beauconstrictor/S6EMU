@@ -12,14 +12,14 @@
 #define HALT 0xfffe
 
 #define HELP \
-  "Usage: s6 [ROM]\n" \
+  "Usage: s6emu [ROM]\n" \
   "A SUBLEQ-6 Emulator. Pass a ROM image up to 32K.\n" \
   "\n" \
   "Options:\n" \
   "  --version       Show version information and exit\n"
 
 #define VERSION \
-  "s6 (SUBLEQ-6 Emulator) v1.0.0\n" \
+  "s6emu (SUBLEQ-6 Emulator) v1.0.0\n" \
   "Copyright (c) 2026 Beau Constrictor\n" \
   "License GPLv2: GNU GPL version 2 <https://gnu.org/licenses/gpl.html>.\n" \
   "This is free software: you are free to change and redistribute it.\n" \
@@ -108,7 +108,7 @@ word_t execute(word_t addr) {
   byte_t r = fetch(b) - fetch(a);
   put(b, r);
 
-  if ((r == 0 || (r & 0x80)) && (c != 0xffff))
+  if (r == 0 || (r & 0x80))
     return c;
   else
     return addr;
