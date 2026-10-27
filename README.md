@@ -9,6 +9,8 @@ There are currently two parts to this project:
 - [S6ASM](https://github.com/beauconstrictor/s6asm) - A macro assembler (and integrated emulator) for the S6 assembly language.
 - [S6EMU](https://github.com/beauconstrictor/s6emu) (this repo) - A standalone emulator for the S6, written in C.
 
+The computer's name, the S6, comes from comes from it's characteristic 6-byte `subleq` instructions, making the 'SUBLEQ-6', which is then abbreviated to just S6.
+
 ## This Emulator
 
 This repository contains a sample emulator for the system, written in C. To download & build it, install `clang` and `make` and run:
